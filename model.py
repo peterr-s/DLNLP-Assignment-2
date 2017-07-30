@@ -32,9 +32,9 @@ class Model:
 
 		# configuration
 		LSTM_ct = 4
-		LSTM_sz = 100
+		LSTM_sz = 200
 		embedding_sz = 300
-		dropout_ratio = 0.8
+		dropout_ratio = 0.9
 
 		self._x = tf.placeholder(tf.int32, shape=[batch_size, input_size])
 		self._lens = tf.placeholder(tf.int32, shape=[batch_size])
@@ -45,7 +45,6 @@ class Model:
 		# convert to embeddings
 		embeddings = tf.get_variable("embeddings", shape = [n_chars, embedding_sz])
 		input_layer = tf.nn.embedding_lookup(embeddings, self._x)
-	#	input_layer = tf.nn.dropout(input_layer, 0.7)
 
 		# make a bunch of LSTM cells and link them
 		# use rnn.DropoutWrapper instead of tf.nn.dropout because the layers are anonymous
@@ -53,9 +52,6 @@ class Model:
 		
 		# run the whole thing
 		_, hidden = tf.nn.dynamic_rnn(stacked_LSTM, input_layer, sequence_length = self._lens, dtype = tf.float32)
-
-	#	GRU_cell = rnn.GRUCell(100)
-	#	_, hidden = tf.nn.dynamic_rnn(GRU_cell, input_layer, sequence_length = self._lens, dtype = tf.float32)
 		w = tf.get_variable("W", shape=[hidden[-1].h.shape[1], label_size]) # if I understood the structure of MultiRNNCell correctly, hidden[-1] should be the final state
 		b = tf.get_variable("b", shape=[1])
 		logits = tf.matmul(hidden[-1].h, w) + b
