@@ -1,3 +1,6 @@
+# Author: Peter Schoener, 4013996
+# Honor Code: I pledge that this program represents my own work.
+
 from enum import Enum
 
 import tensorflow as tf
@@ -29,23 +32,22 @@ class Model:
 
 		hidden_sz = 200
 
-		layer = tf.reshape(tf.one_hot(self._x, n_chars), [batch_size, -1])
-		hidden_w = tf.get_variable("w_hidden", shape = [layer.shape[0], hidden_sz])
-		hidden_b = tf.get_variable("b_hidden", shape = [hidden_sz])
-		for i in range(0, input_size) :
-			hidden_outputs = tf.sigmoid(tf.matmul(layer, hidden_w) + hidden_b)
-			layer = hidden_outputs
-		
-		w = tf.get_variable("w", shape = [layer.shape[1], label_size])
-		b = tf.get_variable("b", shape = [label_size])
-		logits = tf.matmul(layer, w) + b
-        
-	#	GRU_cell = rnn.GRUCell(100)
-	#	hidden = tf.nn.dynamic_rnn(GRU_cell, tf.reshape(tf.one_hot(self._x, n_chars), [batch_size, -1]), sequence_length = self._lens, dtype = tf.float32)
 
-	#	w = tf.get_variable("w", shape = [layer.shape[1], label_size])
-	#	b = tf.get_variable("b", shape = [label_size])
-	#	logits = tf.matmul(hidden, w) + b
+		self._x = tf.placeholder(tf.int32, shape=[batch_size, input_size])
+		self._lens = tf.placeholder(tf.int32, shape=[batch_size])
+		if phase != Phase.Predict:
+			self._y = tf.placeholder(
+				tf.float32, shape=[batch_size, label_size])
+
+		embeddings = tf.get_variable("embeddings", shape=[n_chars, 300])
+		input_layer = tf.nn.embedding_lookup(embeddings, self._x)
+		input_layer = tf.nn.dropout(input_layer, 0.6)
+
+		GRU_cell = rnn.GRUCell(100)
+		_, hidden = tf.nn.dynamic_rnn(GRU_cell, input_layer, sequence_length = self._lens, dtype = tf.float32)
+		w = tf.get_variable("W", shape=[hidden.shape[1], label_size])
+		b = tf.get_variable("b", shape=[1])
+		logits = tf.matmul(hidden, w) + b
 
 		if phase == Phase.Train or Phase.Validation:
 			losses = tf.nn.softmax_cross_entropy_with_logits(
