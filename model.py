@@ -30,12 +30,6 @@ class Model:
 			self._y = tf.placeholder(
 				tf.float32, shape=[batch_size, label_size])
 
-		# configuration
-		LSTM_ct = 4
-		LSTM_sz = 200
-		embedding_sz = 300
-		dropout_ratio = 0.9
-
 		self._x = tf.placeholder(tf.int32, shape=[batch_size, input_size])
 		self._lens = tf.placeholder(tf.int32, shape=[batch_size])
 		if phase != Phase.Predict:
@@ -43,12 +37,12 @@ class Model:
 				tf.float32, shape=[batch_size, label_size])
 
 		# convert to embeddings
-		embeddings = tf.get_variable("embeddings", shape = [n_chars, embedding_sz])
+		embeddings = tf.get_variable("embeddings", shape = [n_chars, config.embedding_sz])
 		input_layer = tf.nn.embedding_lookup(embeddings, self._x)
 
 		# make a bunch of LSTM cells and link them
 		# use rnn.DropoutWrapper instead of tf.nn.dropout because the layers are anonymous
-		stacked_LSTM = rnn.MultiRNNCell([rnn.DropoutWrapper(rnn.BasicLSTMCell(LSTM_sz), output_keep_prob = dropout_ratio) for _ in range(LSTM_ct)])
+		stacked_LSTM = rnn.MultiRNNCell([rnn.DropoutWrapper(rnn.BasicLSTMCell(config.LSTM_sz), output_keep_prob = config.dropout_ratio) for _ in range(config.LSTM_ct)])
 		
 		# run the whole thing
 		_, hidden = tf.nn.dynamic_rnn(stacked_LSTM, input_layer, sequence_length = self._lens, dtype = tf.float32)
